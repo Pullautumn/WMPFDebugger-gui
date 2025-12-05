@@ -19,7 +19,7 @@
 npm install
 ```
 
-## 编译TypeScript代码
+## 启动
 
 ```bash
 运行.bat
