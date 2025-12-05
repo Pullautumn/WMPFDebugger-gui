@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信小程序调试器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+            text-align: center;
+        }
+        .refresh-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        .refresh-btn:hover {
+            background-color: #f57c00;
+        }
+        .instructions {
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .start-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .start-btn:hover {
+            background-color: #45a049;
+        }
+        .stop-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .stop-btn:hover {
+            background-color: #d32f2f;
+        }
+        .devtools-btn {
+            background-color: #008CBA;
+            color: white;
+        }
+        .devtools-btn:hover {
+            background-color: #007399;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .status.running {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status.stopped {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .status.warning {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>微信小程序调试器</h1>
+        
+        <div class="instructions">
+            <p>这是WMPFDebugger的桌面版本界面。</p>
+            <ol>
+                <li>点击"启动调试器"按钮启动后端服务</li>
+                <li>点击"打开DevTools"按钮打开Chrome开发者工具界面</li>
+                <li>点击"关闭调试器"按钮关闭后端服务</li>
+            </ol>
+        </div>
+        
+        <div class="button-group">
+            <button class="start-btn" id="startBtn" onclick="startServer()">启动调试器</button>
+            <button class="stop-btn" id="stopBtn" onclick="stopServer()">关闭调试器</button>
+            <button class="devtools-btn" id="devtoolsBtn" onclick="openDevTools()">打开控制台</button>
+            <button class="refresh-btn" id="refreshBtn" onclick="refreshDevTools()">刷新控制台</button>
+        </div>
+        
+        <div id="status" class="status stopped">未运行</div>
+        
+        <div class="info">
+            <p><strong>注意事项：</strong></p>
+            <ul>
+                <li>确保8080端口和62000端口未被占用</li>
+                <li>Chrome DevTools界面需要Chrome浏览器支持</li>
+                <li>如果遇到连接问题，请检查网络设置和防火墙配置</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const electron = require('electron');
+        const ipcRenderer = electron.ipcRenderer;
+        let isRunning = false;
+        
+        // 更新按钮状态
+        function updateButtonStates() {
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const devtoolsBtn = document.getElementById('devtoolsBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            
+            startBtn.disabled = isRunning;
+            stopBtn.disabled = !isRunning;
+            devtoolsBtn.disabled = !isRunning;
+            refreshBtn.disabled = !isRunning;
+        }
+        
+        // 更新状态显示
+        function updateStatus() {
+            const statusDiv = document.getElementById('status');
+            if (isRunning) {
+                statusDiv.textContent = '运行中';
+                statusDiv.className = 'status running';
+            } else {
+                statusDiv.textContent = '未运行';
+                statusDiv.className = 'status stopped';
+            }
+        }
+        
+        // 启动服务器
+        function startServer() {
+            ipcRenderer.send('start-server');
+        }
+        
+        // 停止服务器
+        function stopServer() {
+            ipcRenderer.send('stop-server');
+        }
+        
+        // 打开控制台
+        function openDevTools() {
+            ipcRenderer.send('open-devtools');
+        }
+        
+        // 刷新控制台
+        function refreshDevTools() {
+            ipcRenderer.send('refresh-devtools');
+        }
+        
+        // 监听服务器状态变化
+        ipcRenderer.on('server-status', (event, data) => {
+            isRunning = data.running;
+            updateStatus();
+            updateButtonStates();
+        });
+        
+        // 初始化
+        updateButtonStates();
+        updateStatus();
+    </script>
+</body>
+</html>
